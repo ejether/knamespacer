@@ -1,0 +1,57 @@
+package knamespace
+
+import (
+	"errors"
+	"fmt"
+	"os"
+
+	log "github.com/sirupsen/logrus"
+
+	"gopkg.in/yaml.v2"
+)
+
+type NamespaceConfig struct {
+	Name        string            `yaml:"name"`
+	Mode        string            `yaml:"mode"`
+	Annotations map[string]string `yaml:"annotations"`
+	Labels      map[string]string `yaml:"labels"`
+}
+
+type NamespacesConfig struct {
+	DefaultConfig []NamespaceConfig `yaml:"defaultNamespaceSettings"`
+	Namespaces    []NamespaceConfig `yaml:"namespaces"`
+}
+
+// Gets the config for a specific Knamespace
+func (n NamespacesConfig) GetConfig(namespaceName string) (*NamespaceConfig, error) {
+	for _, namespaceConfig := range n.Namespaces {
+		if namespaceConfig.Name == namespaceName {
+			return &namespaceConfig, nil
+		}
+	}
+	return nil, errors.New(fmt.Sprintf("namespace %s not found in configuration", namespaceName))
+}
+
+// Get Knamespacer Defaults
+func (n NamespacesConfig) GetDefault() (*NamespaceConfig, error) {
+	return &n.DefaultConfig[0], nil
+}
+
+// Read and return namespaces configuration. Exit if we can't.
+func GetNamespacesConfig(namespacesConfigFileName string) *NamespacesConfig {
+	data := &NamespacesConfig{}
+	log.Info("Reading Config File %s:", namespacesConfigFileName)
+	contents, err := os.ReadFile(namespacesConfigFileName)
+	if err != nil {
+		log.Fatalf("Error reading Knamespacer Configuration File %s: %s", namespacesConfigFileName, err)
+	}
+	log.Debugf(string(contents))
+
+	err = yaml.UnmarshalStrict(contents, data)
+	if err != nil {
+		log.Fatalf("Error parsing Configuration: %s", err)
+	}
+	log.Debugf("Defaults: %#v", data.DefaultConfig[0])
+	log.Debugf("Namespaces: %#v", data.Namespaces)
+	return data
+}
