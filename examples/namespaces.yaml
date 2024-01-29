@@ -20,4 +20,3 @@ namespaces: # Creates all  namespaces listed with the metadata specified
   annotations: {}
   labels: {}
   mode: upsert # Inserts new, updates existing. Does not delete 
-  
