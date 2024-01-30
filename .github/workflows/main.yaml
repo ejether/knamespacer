@@ -1,3 +1,4 @@
+---
 name: Main
 
 on:
@@ -14,7 +15,8 @@ permissions:
   statuses: write
 
 concurrency:
-  group: '${{ github.workflow }}-${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  group: |
+    '${{ github.workflow }}-${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
   cancel-in-progress: true
 
 jobs:
@@ -23,67 +25,64 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        # super-linter needs the full git history to get the list of files that changed across commits
-        fetch-depth: 0
-    
-    - name: Super-linter
-      uses: super-linter/super-linter@v5.7.2  # x-release-please-version
-      env:
-        DEFAULT_BRANCH: main
-        # To report GitHub Actions status checks
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        VALIDATE_ALL_CODEBASE: false
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # super-linter needs the full git history to get the list of files that
+          # changed across commits
+          fetch-depth: 0
       
-  build: # Mostly stolen from : https://docs.docker.com/build/ci/github-actions/multi-platform/
+      - name: Super-linter
+        uses: super-linter/super-linter@v5.7.2  # x-release-please-version
+        env:
+          DEFAULT_BRANCH: main
+          # To report GitHub Actions status checks
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_ALL_CODEBASE: false
+  # Mostly stolen from: https://docs.docker.com/build/ci/github-actions/multi-platform/
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Prepare
-      run: |
-        platform=${{ matrix.platform }} echo  "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Set up QEMU # qemu should only be needed for multi-platform images
+        uses: docker/setup-qemu-action@v2
 
-    - name: Set up QEMU # qemu should only be needed for multi-platform images
-      uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Log in to the Container registry
-      uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Docker Meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
 
-    - name: Docker Meta
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: |
-          ghcr.io/${{ github.repository }}
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '^1.21'
 
-    - name: Setup Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '^1.21'
+      - name: Build
+        run: |
+          go version
+          make tidy
+          make build
 
-    - name: Build
-      run: |
-        go version
-        make tidy
-        make build
-
-    - name: Build and push
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        platforms: linux/amd64,linux/arm64
-        labels: ${{ steps.meta.outputs.labels }}
-        push: true
-        tags: ${{ steps.meta.outputs.tags }}
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          labels: ${{ steps.meta.outputs.labels }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
