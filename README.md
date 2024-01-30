@@ -4,8 +4,8 @@ Kubernetes Namespace Controller
 Usage:
 
 ```shell
-go tidy
-go build
+make tidy
+make build
 knamespacer -debug -config examples/namespaces.yaml
 ```
 
