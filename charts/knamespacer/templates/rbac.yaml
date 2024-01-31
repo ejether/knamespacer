@@ -1,0 +1,26 @@
+{{- if .Values.rbac.create -}}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "knamespacer.fullname" . }}
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["namespaces"]
+  verbs: ["get", "watch", "list", "update"]
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "knamespacer.fullname" . }}
+subjects:
+- kind: ServiceAccount
+  name:  {{ include "knamespacer.serviceAccountName" . }}
+  namespace: {{.Release.Namespace}}
+  apiGroup: ""
+roleRef:
+  kind: ClusterRole
+  name: {{ include "knamespacer.fullname" . }}
+  apiGroup: ""
+{{- end }}

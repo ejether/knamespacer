@@ -1,0 +1,29 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name:  {{ include "knamespacer.fullname" . }}
+data:
+  namespace.yaml: |
+    defaultNamespaceSettings:
+    - name: defaultSettings
+      annotations: {}
+      labels: {}
+      mode: upsert
+    namespaces: # Creates all namespaces listed with the metadata specified
+    - name: one
+      annotations: 
+        foo: one
+      labels:
+        bar: one
+      mode: sync # Deletes all existing add only those configured here
+    - name: two
+      annotations:
+        foo: two
+      labels:
+        bar: two
+      mode: insert # Inserts new only. Does not edit existing in case of conflict
+    - name: three
+      annotations: {}
+      labels: {}
+      mode: upsert # Inserts new, updates existing. Does not delete 

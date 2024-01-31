@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "knamespacer.fullname" . }}
+  labels:
+    {{- include "knamespacer.labels" . | nindent 4 }}
+spec:
+  # Caution: Knamespacer is not designed to run with more than one replica.
+  # You may experience unfortunate side effects.
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "knamespacer.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "knamespacer.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "knamespacer.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c 
+                - ps -ef | grep -q "[k]namespacer"
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c 
+                - ps -ef | grep -q "[k]namespacer"
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          command: 
+            - /knamespacer 
+            - --debug 
+            - --config 
+            - config/namespaces.yaml
+          volumeMounts:
+            - name: config
+              mountPath: /config
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name:  {{ include "knamespacer.fullname" . }}
+            items:
+            - key: namespace.yaml
+              path: namespaces.yaml

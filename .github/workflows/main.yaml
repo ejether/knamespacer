@@ -4,6 +4,8 @@ name: Main
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
@@ -20,7 +22,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-
   linting:
     runs-on: ubuntu-latest
 
@@ -31,14 +32,49 @@ jobs:
           # super-linter needs the full git history to get the list of files that
           # changed across commits
           fetch-depth: 0
-      
+
       - name: Super-linter
-        uses: super-linter/super-linter@v5.7.2  # x-release-please-version
+        uses: super-linter/super-linter@v5.7.2 # x-release-please-version
         env:
           DEFAULT_BRANCH: main
           # To report GitHub Actions status checks
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_ALL_CODEBASE: false
+          # Superlinter doesn't seem to know what to do with helm charts
+          # We'll lint them below instead
+          FILTER_REGEX_EXCLUDE: charts/*
+
+  helm-chart:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} # only needed if version is 'latest'
+        id: install
+
+      - name: Check Chart
+        run: |
+          helm template charts/knamespacer --debug
+          helm lint charts/knamespacer
+
+      - name: Upload Chart if Main
+        if: github.ref == 'refs/heads/master'
+        run: |
+          helm package charts/${{ github.repository }}
+          helm push ${{ github.repository }}-*.tgz oci://ghcr.io/${{ github.actor }}/charts
+
   # Mostly stolen from: https://docs.docker.com/build/ci/github-actions/multi-platform/
   build:
     runs-on: ubuntu-latest
@@ -70,7 +106,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '^1.21'
+          go-version: "^1.21"
 
       - name: Build
         run: |
