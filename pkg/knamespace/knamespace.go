@@ -34,7 +34,7 @@ type NamespaceConfig struct {
 }
 
 type NamespacesConfig struct {
-	DefaultConfig []NamespaceConfig `yaml:"defaultNamespaceSettings"`
+	DefaultConfig NamespaceConfig   `yaml:"defaultNamespaceSettings"`
 	Namespaces    []NamespaceConfig `yaml:"namespaces"`
 }
 
@@ -50,7 +50,7 @@ func (n NamespacesConfig) GetConfig(namespaceName string) (*NamespaceConfig, err
 
 // Get Knamespacer Defaults
 func (n NamespacesConfig) GetDefault() (*NamespaceConfig, error) {
-	return &n.DefaultConfig[0], nil
+	return &n.DefaultConfig, nil
 }
 
 // Read and return namespaces configuration. Exit if we can't.
@@ -67,7 +67,7 @@ func GetNamespacesConfig(namespacesConfigFileName string) *NamespacesConfig {
 	if err != nil {
 		log.Fatalf("Error parsing Configuration: %s", err)
 	}
-	log.Debugf("Defaults: %#v", data.DefaultConfig[0])
+	log.Debugf("Defaults: %#v", data.DefaultConfig)
 	log.Debugf("Namespaces: %#v", data.Namespaces)
 	return data
 }
