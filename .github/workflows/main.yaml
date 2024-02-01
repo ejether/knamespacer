@@ -72,7 +72,7 @@ jobs:
       - name: Upload Chart if Main
         if: github.ref == 'refs/heads/main'
         run: |
-          helm package charts/${{ github.repository }}
+          helm package charts/knamespacer
           helm push ${{ github.repository }}-*.tgz oci://ghcr.io/${{ github.actor }}/charts
 
   # Mostly stolen from: https://docs.docker.com/build/ci/github-actions/multi-platform/

@@ -42,32 +42,69 @@ type NamespacesConfig struct {
 func (n NamespacesConfig) GetConfig(namespaceName string) (*NamespaceConfig, error) {
 	for _, namespaceConfig := range n.Namespaces {
 		if namespaceConfig.Name == namespaceName {
+
+			// Apply Defaults to the retrieved namespaceConfig
+			if namespaceConfig.Annotations == nil {
+				namespaceConfig.Annotations = n.DefaultConfig.Annotations
+			}
+
+			if namespaceConfig.Labels == nil {
+				namespaceConfig.Labels = n.DefaultConfig.Labels
+			}
+
+			if namespaceConfig.Mode == "" {
+				namespaceConfig.Mode = n.DefaultConfig.Mode
+			}
+
 			return &namespaceConfig, nil
 		}
 	}
 	return nil, fmt.Errorf(fmt.Sprintf("namespace %s not found in configuration", namespaceName))
 }
 
-// Get Knamespacer Defaults
+// Return Knamespacer Defaults
 func (n NamespacesConfig) GetDefault() (*NamespaceConfig, error) {
 	return &n.DefaultConfig, nil
 }
 
-// Read and return namespaces configuration. Exit if we can't.
-func GetNamespacesConfig(namespacesConfigFileName string) *NamespacesConfig {
-	data := &NamespacesConfig{}
-	log.Infof("Reading Config File %s:", namespacesConfigFileName)
-	contents, err := os.ReadFile(namespacesConfigFileName)
-	if err != nil {
-		log.Fatalf("Error reading Knamespacer Configuration File %s: %s", namespacesConfigFileName, err)
-	}
-	log.Debugf(string(contents))
+// Return Namespaces config from Namespaces config file
+func GetNamespacesConfig(namespacesConfigFileName string) (*NamespacesConfig, error) {
 
-	err = yaml.UnmarshalStrict(contents, data)
+	contents, err := readConfigFile(namespacesConfigFileName)
 	if err != nil {
-		log.Fatalf("Error parsing Configuration: %s", err)
+		return nil, err
 	}
+
+	data, err := parseConfigFileContents(contents)
+	if err != nil {
+		return nil, err
+	}
+
 	log.Debugf("Defaults: %#v", data.DefaultConfig)
 	log.Debugf("Namespaces: %#v", data.Namespaces)
-	return data
+
+	return data, nil
+}
+
+// Read config file, return contents
+func readConfigFile(namespacesConfigFileName string) ([]byte, error) {
+	log.Debugf("Reading Config File %s:", namespacesConfigFileName)
+	contents, err := os.ReadFile(namespacesConfigFileName)
+	if err != nil {
+		log.Errorf("Error reading Knamespacer conig file %s : %s", namespacesConfigFileName, err)
+		return nil, err
+	}
+	log.Debugf(string(contents))
+	return contents, err
+}
+
+// Unmarshal contents of config file into NamespacesesConfig
+func parseConfigFileContents(contents []byte) (*NamespacesConfig, error) {
+	data := &NamespacesConfig{}
+	err := yaml.UnmarshalStrict(contents, data)
+	if err != nil {
+		log.Errorf("Error parsing Knamespacer Configuration: %s", err)
+		return nil, err
+	}
+	return data, nil
 }

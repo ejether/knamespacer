@@ -34,7 +34,7 @@ import (
 
 func Controller(namespacesConfigFile string) {
 
-	namespacesConfig := knamespace.GetNamespacesConfig(namespacesConfigFile)
+	namespacesConfig, _ := knamespace.GetNamespacesConfig(namespacesConfigFile)
 
 	if err := createMissingNamespaces(namespacesConfig); err != nil {
 		log.Errorf("Unable to create some namespaces configure, but not already present: %s", err)
