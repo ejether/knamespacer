@@ -1,5 +1,5 @@
 defaultNamespaceSettings:
-- name: defaultSettings
+  name: defaultSettings
   annotations: {}
   labels: {}
   mode: upsert
@@ -17,6 +17,13 @@ namespaces: # Creates all  namespaces listed with the metadata specified
     bar: two
   mode: insert # Inserts new only. Does not edit existing in case of conflict
 - name: three
+  annotations:
+    foo: three
+    thisL: should
+  labels:
+    add: new
+  mode: upsert # Inserts new, updates existing. Does not delete
+- name: four
   annotations: {}
   labels: {}
-  mode: upsert # Inserts new, updates existing. Does not delete 
+  mode: upsert # Inserts new, updates existing. Does not delete

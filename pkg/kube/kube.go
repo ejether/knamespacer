@@ -86,21 +86,28 @@ func CreateNamespaces(namespaceNames []string) error {
 // Creates a Namespace
 func createNamespace(namespaceName string) error {
 	clientset := GetClientSet()
-	nsName := &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: namespaceName,
-		},
+
+	// This could probably go somewhere else BUT
+	// If a namespace is being terminated, then this
+	// will get the namespace and "receate" it with the
+	// current namespace object
+	namespace, _ := GetClusterNamespace(namespaceName)
+	log.Debug(namespace.Name)
+	// Else, create it new
+	if namespace.Name == "" {
+		namespace = &corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: namespaceName,
+			},
+		}
 	}
 
-	_, err := clientset.CoreV1().Namespaces().Create(context.Background(), nsName, metav1.CreateOptions{})
+	_, err := clientset.CoreV1().Namespaces().Create(context.Background(), namespace, metav1.CreateOptions{})
 	return err
 }
 
 // Modify the Metadata of the specified Namespace
-func ModifyNamespaceMetadata(namespace *corev1.Namespace, annotations map[string]string, labels map[string]string) error {
-
-	namespace.ObjectMeta.Annotations = annotations
-	namespace.ObjectMeta.Labels = labels
+func UpdateNamespace(namespace *corev1.Namespace) error {
 
 	clientset := GetClientSet()
 	_, err := clientset.CoreV1().Namespaces().Update(context.TODO(), namespace, metav1.UpdateOptions{})
