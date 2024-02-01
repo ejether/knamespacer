@@ -73,7 +73,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           helm package charts/knamespacer
-          helm push knamespacer-*.tgz oci://ghcr.io/${{ github.actor }}/charts
+          helm push knamespacer-*.tgz oci://ghcr.io/${{ github.actor }}/knamespacer/charts
 
   # Mostly stolen from: https://docs.docker.com/build/ci/github-actions/multi-platform/
   build:
