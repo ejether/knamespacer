@@ -1,7 +1,9 @@
 defaultNamespaceSettings:
   name: defaultSettings
-  annotations: {}
-  labels: {}
+  annotations:
+    default: annotation
+  labels:
+    default: label
   mode: upsert
 namespaces: # Creates all  namespaces listed with the metadata specified
 - name: one
@@ -24,6 +26,3 @@ namespaces: # Creates all  namespaces listed with the metadata specified
     add: new
   mode: upsert # Inserts new, updates existing. Does not delete
 - name: four
-  annotations: {}
-  labels: {}
-  mode: upsert # Inserts new, updates existing. Does not delete
