@@ -70,7 +70,7 @@ jobs:
           helm lint charts/knamespacer
 
       - name: Upload Chart if Main
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
         run: |
           helm package charts/${{ github.repository }}
           helm push ${{ github.repository }}-*.tgz oci://ghcr.io/${{ github.actor }}/charts
