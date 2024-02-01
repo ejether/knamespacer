@@ -20,4 +20,4 @@ knamespacer -debug -config examples/namespaces.yaml
 
 ### Helm
 
-`helm upgrade --install --namespace knamespacer --create-namespace knamespacer oci://ghcr.io/ejether/charts/knamespacer`
+`helm upgrade --install --namespace knamespacer --create-namespace knamespacer oci://ghcr.io/ejether/knamespacer/charts/knamespacer`
