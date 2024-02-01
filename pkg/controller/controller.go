@@ -124,7 +124,7 @@ func ModifyNamespaceMetadata(namespace *corev1.Namespace, namespaceConfig *kname
 
 // Used to sync Annotations or Labels on a Namespace. Sync wholesale replaces the meta type so this just returns the new config
 // metaObject passed in so all 'mode' functions have the same signature.
-func syncNamespaceMeta(metaObject map[string]string, config map[string]string) map[string]string {
+func syncNamespaceMeta(_ map[string]string, config map[string]string) map[string]string {
 	return config
 }
 
