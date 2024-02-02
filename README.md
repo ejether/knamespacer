@@ -1,4 +1,4 @@
-# knamespacer ![Main Workflow](https://github.com/ejether/knamespacer/actions/workflows/main/badge.svg)
+# knamespacer [![Main](https://github.com/ejether/knamespacer/actions/workflows/main.yaml/badge.svg)](https://github.com/ejether/knamespacer/actions/workflows/main.yaml)
 
 Kubernetes Namespace Controller
 
