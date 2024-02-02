@@ -71,9 +71,8 @@ func GetClient() client.Client {
 // List namespaces currently in cluster. Exit if we can't.
 func ListClusterNameSpaces() *corev1.NamespaceList {
 	k8s := GetClient()
-	ctx := context.TODO()
 	nsList := &corev1.NamespaceList{}
-	err := k8s.List(ctx, nsList)
+	err := k8s.List(context.TODO(), nsList)
 	if err != nil {
 		log.Fatalf("Error listing Cluster Namespaces: %s", err)
 	}
