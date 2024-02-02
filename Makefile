@@ -7,11 +7,15 @@ BINARY_NAME=knamespacer
 COMMIT := $(shell git rev-parse HEAD)
 VERSION := "dev"
 
-all: test build
+all: test build run
 build:
 	$(GOBUILD) -o $(BINARY_NAME) -ldflags "-X main.version=$(VERSION) -X main.commit=$(COMMIT) -s -w" -v
 lint:
 	golangci-lint run
+run:
+	./knamespacer -c ./examples/namespaces.yaml --debug
+test:
+	go test ./... -v --count=1
 # test:
 # 	printf "\n\nTests:\n\n"
 # 	$(GOCMD) test -v --bench --benchmem -coverprofile coverage.txt -covermode=atomic ./...

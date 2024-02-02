@@ -25,13 +25,16 @@ import (
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
-// Get k8s client.
+// Get k8s clientset.
 func GetClientSet() *kubernetes.Clientset {
 
 	log.Debug("Get kubernetes config.")
@@ -53,12 +56,24 @@ func GetClientSet() *kubernetes.Clientset {
 	return clientset
 }
 
+// Get k8s client.
+func GetClient() client.Client {
+
+	log.Debug("Get kubernetes config.")
+	k8s, err := client.New(config.GetConfigOrDie(), client.Options{})
+	if err != nil {
+		log.Fatalf("Error creating kubernetes client: %s", err)
+	}
+
+	return k8s
+}
+
 // List namespaces currently in cluster. Exit if we can't.
 func ListClusterNameSpaces() *corev1.NamespaceList {
-	clientset := GetClientSet()
-	nsList, err := clientset.CoreV1().
-		Namespaces().
-		List(context.Background(), metav1.ListOptions{})
+	k8s := GetClient()
+	ctx := context.TODO()
+	nsList := &corev1.NamespaceList{}
+	err := k8s.List(ctx, nsList)
 	if err != nil {
 		log.Fatalf("Error listing Cluster Namespaces: %s", err)
 	}
@@ -85,7 +100,7 @@ func CreateNamespaces(namespaceNames []string) error {
 
 // Creates a Namespace
 func createNamespace(namespaceName string) error {
-	clientset := GetClientSet()
+	k8s := GetClient()
 
 	// This could probably go somewhere else BUT
 	// If a namespace is being terminated, then this
@@ -102,15 +117,15 @@ func createNamespace(namespaceName string) error {
 		}
 	}
 
-	_, err := clientset.CoreV1().Namespaces().Create(context.Background(), namespace, metav1.CreateOptions{})
+	err := k8s.Create(context.Background(), namespace)
+
 	return err
 }
 
 // Modify the Metadata of the specified Namespace
 func UpdateNamespace(namespace *corev1.Namespace) error {
-
-	clientset := GetClientSet()
-	_, err := clientset.CoreV1().Namespaces().Update(context.TODO(), namespace, metav1.UpdateOptions{})
+	k8s := GetClient()
+	err := k8s.Update(context.TODO(), namespace)
 	if err != nil {
 		log.Errorf("Could not update namespace %s: %s", namespace.Name, err)
 		return err
@@ -120,7 +135,10 @@ func UpdateNamespace(namespace *corev1.Namespace) error {
 
 // Retrieve corev1.Namespace from cluster
 func GetClusterNamespace(namespaceName string) (*corev1.Namespace, error) {
-	clientset := GetClientSet()
-	namespace, err := clientset.CoreV1().Namespaces().Get(context.TODO(), namespaceName, metav1.GetOptions{})
+	k8s := GetClient()
+	namespace := &corev1.Namespace{}
+	err := k8s.Get(context.TODO(), types.NamespacedName{
+		Name: namespaceName,
+	}, namespace)
 	return namespace, err
 }
