@@ -20,6 +20,7 @@ package kube
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
@@ -33,6 +34,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
+
+type K8sClient struct {
+	k8s client.Client
+}
+
+func NewK8sClient() *K8sClient {
+	return &K8sClient{
+		k8s: GetClient(),
+	}
+}
 
 // Get k8s clientset.
 func GetClientSet() *kubernetes.Clientset {
@@ -69,22 +80,21 @@ func GetClient() client.Client {
 }
 
 // List namespaces currently in cluster. Exit if we can't.
-func ListClusterNameSpaces() *corev1.NamespaceList {
-	k8s := GetClient()
+func (c *K8sClient) ListClusterNameSpaces() (*corev1.NamespaceList, error) {
 	nsList := &corev1.NamespaceList{}
-	err := k8s.List(context.TODO(), nsList)
+	err := c.k8s.List(context.TODO(), nsList)
 	if err != nil {
-		log.Fatalf("Error listing Cluster Namespaces: %s", err)
+		return nil, fmt.Errorf("Error listing Cluster Namespaces: %w", err)
 	}
 
-	return nsList
+	return nsList, nil
 }
 
 // Creates a namespace if it does not exist
-func CreateNamespaces(namespaceNames []string) error {
+func (c *K8sClient) CreateNamespaces(namespaceNames []string) error {
 	didGetError := false
 	for _, nsName := range namespaceNames {
-		if err := createNamespace(nsName); err != nil {
+		if err := c.CreateNamespace(nsName); err != nil {
 			log.Errorf("Unable to create namespace %s: %s", nsName, err)
 			didGetError = true
 		}
@@ -98,14 +108,12 @@ func CreateNamespaces(namespaceNames []string) error {
 }
 
 // Creates a Namespace
-func createNamespace(namespaceName string) error {
-	k8s := GetClient()
-
+func (c *K8sClient) CreateNamespace(namespaceName string) error {
 	// This could probably go somewhere else BUT
 	// If a namespace is being terminated, then this
 	// will get the namespace and "receate" it with the
 	// current namespace object
-	namespace, _ := GetClusterNamespace(namespaceName)
+	namespace, _ := c.GetClusterNamespace(namespaceName)
 	log.Debug(namespace.Name)
 	// Else, create it new
 	if namespace.Name == "" {
@@ -116,15 +124,14 @@ func createNamespace(namespaceName string) error {
 		}
 	}
 
-	err := k8s.Create(context.Background(), namespace)
+	err := c.k8s.Create(context.Background(), namespace)
 
 	return err
 }
 
 // Modify the Metadata of the specified Namespace
-func UpdateNamespace(namespace *corev1.Namespace) error {
-	k8s := GetClient()
-	err := k8s.Update(context.TODO(), namespace)
+func (c *K8sClient) UpdateNamespace(namespace *corev1.Namespace) error {
+	err := c.k8s.Update(context.TODO(), namespace)
 	if err != nil {
 		log.Errorf("Could not update namespace %s: %s", namespace.Name, err)
 		return err
@@ -133,10 +140,9 @@ func UpdateNamespace(namespace *corev1.Namespace) error {
 }
 
 // Retrieve corev1.Namespace from cluster
-func GetClusterNamespace(namespaceName string) (*corev1.Namespace, error) {
-	k8s := GetClient()
+func (c *K8sClient) GetClusterNamespace(namespaceName string) (*corev1.Namespace, error) {
 	namespace := &corev1.Namespace{}
-	err := k8s.Get(context.TODO(), types.NamespacedName{
+	err := c.k8s.Get(context.TODO(), types.NamespacedName{
 		Name: namespaceName,
 	}, namespace)
 	return namespace, err
