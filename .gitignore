@@ -25,3 +25,7 @@ go.work
 
 # Packaged Charts
 knamespacer*.tgz
+
+# Testing Artifacts
+cover-report.html
+coverage.txt
