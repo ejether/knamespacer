@@ -8,7 +8,7 @@ COMMIT := $(shell git rev-parse HEAD)
 VERSION := "dev"
 
 all: test build
-build:
+build: tidy
 	$(GOBUILD) -o $(BINARY_NAME) -ldflags "-X main.version=$(VERSION) -X main.commit=$(COMMIT) -s -w" -v
 lint:
 	golangci-lint run
