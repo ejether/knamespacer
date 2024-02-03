@@ -1,6 +1,8 @@
-# knamespacer
+# knamespacer [![Main](https://github.com/ejether/knamespacer/actions/workflows/main.yaml/badge.svg)](https://github.com/ejether/knamespacer/actions/workflows/main.yaml)
 
 Kubernetes Namespace Controller
+
+![The k is silent](/images/knamespacer.png)
 
 **Note** This project is alpha and undergoing development. Expect errors and issue.
 
