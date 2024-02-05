@@ -41,7 +41,7 @@ type K8sClient struct {
 
 func NewK8sClient() *K8sClient {
 	return &K8sClient{
-		k8s: GetClient(),
+		k8s: GetClient(nil),
 	}
 }
 
@@ -68,10 +68,14 @@ func GetClientSet() *kubernetes.Clientset {
 }
 
 // Get k8s client.
-func GetClient() client.Client {
+func GetClient(cfg *rest.Config) client.Client {
+
+	if cfg == nil {
+		cfg = config.GetConfigOrDie()
+	}
 
 	log.Debug("Get kubernetes config.")
-	k8s, err := client.New(config.GetConfigOrDie(), client.Options{})
+	k8s, err := client.New(cfg, client.Options{})
 	if err != nil {
 		log.Fatalf("Error creating kubernetes client: %s", err)
 	}
