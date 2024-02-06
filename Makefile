@@ -40,7 +40,7 @@ build-docker-test:
 docker-test: build-docker-test
 	docker run -it --rm -v "$(shell pwd):$(shell pwd)" -w "$(shell pwd)" knamespacertest:dev \
 	/bin/bash -c "make test"
-docker-shell:
+docker-test-shell:
 	docker run -it --rm -v "$(shell pwd):$(shell pwd)" -w "$(shell pwd)" knamespacertest:dev \
 	/bin/bash
 # e2e-test:

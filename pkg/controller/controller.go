@@ -61,8 +61,13 @@ func WatchNamespaces(namespacesConfig *knamespace.NamespacesConfig) {
 		namespaceName := item.GetName()
 		log.Infof("Caught event %s on namespace: %s. Processing...", event.Type, namespaceName)
 
-		createMissingNamespaces(namespacesConfig)
-		err := processNamespace(namespaceName, namespacesConfig)
+		err := createMissingNamespaces(namespacesConfig)
+		if err != nil {
+			log.Errorf("Encounter %s while creating %s. Skipping....", err, namespaceName)
+			break
+		}
+
+		err = processNamespace(namespaceName, namespacesConfig)
 		if err != nil {
 			log.Errorf("Encounter %s while processing %s. Skipping....", err, namespaceName)
 			break
