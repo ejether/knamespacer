@@ -1,14 +1,27 @@
+FROM golang:1.21 as builder
+ARG TARGETOS
+ARG TARGETARCH
+
+WORKDIR /workspace
+# Copy the Go Modules manifests
+COPY go.mod go.mod
+COPY go.sum go.sum
+# cache deps before building and copying source so that we don't need to re-download as much
+# and so that source changes don't invalidate our downloaded layer
+RUN go mod download
+
+# Copy in the repo
+COPY . /knamespacer
+WORKDIR /knamespacer
+
+RUN make build
+
+
 FROM alpine:3.19
 
-LABEL org.opencontainers.image.authors="FairwindsOps, Inc." \
-      org.opencontainers.image.vendor="FairwindsOps, Inc." \
-      org.opencontainers.image.title="goldilocks" \
-      org.opencontainers.image.description="Goldilocks is a utility that can help you identify a starting point for resource requests and limits." \
-      org.opencontainers.image.documentation="https://goldilocks.docs.fairwinds.com/" \
-      org.opencontainers.image.source="https://github.com/FairwindsOps/goldilocks" \
-      org.opencontainers.image.url="https://github.com/FairwindsOps/goldilocks" \
-      org.opencontainers.image.licenses="Apache License 2.0"
+LABEL org.opencontainers.image.licenses="Apache License 2.0"
+WORKDIR /
 # 'nobody' user in alpine
-USER 65534
-COPY knamespacer /
-CMD ["/knamespacer"]
+USER 65534:65534
+COPY --from=builder /knamespacer/knamespacer .
+ENTRYPOINT ["/knamespacer"]
