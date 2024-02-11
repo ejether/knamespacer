@@ -77,7 +77,10 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 
 	scheme := runtime.NewScheme()
-	clientgoscheme.AddToScheme(scheme)
+	if err := clientgoscheme.AddToScheme(scheme); err != nil {
+		log.Error(err, "unable to add client-go scheme")
+		os.Exit(1)
+	}
 
 	// Starting a manager, which handles the connection to the API as well as caching
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
