@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
@@ -53,8 +54,11 @@ func GetClientSet() *kubernetes.Clientset {
 	if err != nil {
 		log.Debug("In-cluster config not found. Using local config.")
 		// Not in cluster? Let's try locally
-		kubehome := filepath.Join(homedir.HomeDir(), ".kube", "config")
-		cfg, err = clientcmd.BuildConfigFromFlags("", kubehome)
+		var kubeconfig string
+		if kubeconfig = os.Getenv("KUBECONFIG"); kubeconfig == "" {
+			kubeconfig = filepath.Join(homedir.HomeDir(), ".kube", "config")
+		}
+		cfg, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 		if err != nil {
 			log.Fatalf("Error loading local kubernetes configuration: %s", err)
 		}

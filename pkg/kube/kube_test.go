@@ -22,14 +22,13 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/ejether/knamespacer/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	"github.com/ejether/knamespacer/pkg/utils"
 )
 
 var (
