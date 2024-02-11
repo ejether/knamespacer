@@ -12,7 +12,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/ejether/knamespacer/cmd"
 	"github.com/ejether/knamespacer/pkg/kube"
 	"github.com/ejether/knamespacer/pkg/utils"
@@ -63,8 +62,10 @@ func TestEndToEnd(t *testing.T) {
 	assert.Nil(t, err)
 	defer os.Remove(kubeconfig)
 
-	log.Info(kubeconfig)
-	log.Info(spew.Sdump(os.ReadFile(kubeconfig)))
+	assert.NotEmpty(t, kubeconfig)
+	kubeconfigBytes, err := os.ReadFile(kubeconfig)
+	assert.Nil(t, err)
+	assert.NotEmpty(t, kubeconfigBytes)
 
 	err = os.Setenv("KUBECONFIG", kubeconfig)
 	assert.Nil(t, err)
@@ -72,18 +73,16 @@ func TestEndToEnd(t *testing.T) {
 	k8s := kube.NewK8sClient()
 
 	cmd.RootCmd.SetArgs([]string{fmt.Sprintf("--config=%s", "./config.yaml")})
-	go func() {
-		cmd.Execute()
-	}()
+	go cmd.Execute()
 
 	time.Sleep(1 * time.Second)
 
 	nss, err := k8s.ListClusterNameSpaces()
 	assert.Nil(t, err)
 
-	for _, v := range nss.Items {
-		log.Info(v.Name)
-	}
+	// for _, v := range nss.Items {
+	// 	log.Info(v.Name)
+	// }
 
 	for _, v := range expectedNamespaces {
 		if !utils.InArray(v, nss.Items) {
