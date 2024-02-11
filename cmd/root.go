@@ -18,14 +18,22 @@
 package cmd
 
 import (
-	"os"
-	"sync"
-
 	"knamespacer/pkg/controller"
+	"knamespacer/pkg/knamespace"
+	"os"
+
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	log "github.com/sirupsen/logrus"
+
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -33,21 +41,7 @@ var rootCmd = &cobra.Command{
 	Use:   "knamespacer",
 	Short: "Controller for your kubernetes namespaces",
 	Long:  `Controller for your kubernetes namespaces`,
-	Run: func(cmd *cobra.Command, args []string) {
-
-		log.SetOutput(os.Stdout)
-		// Set debug logging.
-		if debug {
-			log.SetLevel(log.DebugLevel)
-		} else {
-			log.SetLevel(log.InfoLevel)
-		}
-
-		var wg sync.WaitGroup
-		go controller.Controller(configFile)
-		wg.Add(1)
-		wg.Wait()
-	},
+	Run:   Run,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -70,4 +64,68 @@ func init() {
 	}
 
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Enable debug mode")
+}
+
+func Run(cmd *cobra.Command, args []string) {
+	log.SetOutput(os.Stdout)
+	// Set debug logging.
+	if debug {
+		log.SetLevel(log.DebugLevel)
+	} else {
+		log.SetLevel(log.InfoLevel)
+	}
+
+	scheme := runtime.NewScheme()
+	clientgoscheme.AddToScheme(scheme)
+
+	// Starting a manager, which handles the connection to the API as well as caching
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		Scheme: scheme,
+		Metrics: metricsserver.Options{
+			BindAddress:   ":8080",
+			SecureServing: false,
+		},
+		WebhookServer:          webhook.NewServer(webhook.Options{}),
+		HealthProbeBindAddress: ":8081",
+		LeaderElection:         false,
+	})
+	if err != nil {
+		log.Error(err, "unable to start manager")
+		os.Exit(1)
+	}
+
+	// Retrieve the config file once
+	var nspcCfg *knamespace.NamespacesConfig
+	if nspcCfg, err = knamespace.GetNamespacesConfig(configFile); err != nil {
+		log.Error(err, "unable to retrieve")
+		os.Exit(1)
+	}
+
+	// Register the controller
+	if err = (&controller.KnamespacerController{
+		StartUp:         true,
+		NamespaceConfig: nspcCfg,
+
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		log.Error(err, "unable to create controller", "controller", "ImageBuild")
+		os.Exit(1)
+	}
+
+	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+		log.Error(err, "unable to set up health check")
+		os.Exit(1)
+	}
+	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+		log.Error(err, "unable to set up ready check")
+		os.Exit(1)
+	}
+
+	// Manager Starts the Controller
+	log.Info("starting manager")
+	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+		log.Error(err, "problem running manager")
+		os.Exit(1)
+	}
 }

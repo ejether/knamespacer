@@ -79,6 +79,9 @@ func TestEnvTest(t *testing.T) {
 }
 
 func TestListClusterNameSpaces(t *testing.T) {
+	log := ctrl.Log.WithName("TestListClusterNameSpaces")
+	log.Info("Starting TestListClusterNameSpaces Test Function")
+
 	testClient, stopFn, err := setupTestEnvironment()
 	defer stopFn()
 	assert.Nil(t, err)
@@ -99,6 +102,9 @@ func TestListClusterNameSpaces(t *testing.T) {
 }
 
 func TestCreateNamespaces(t *testing.T) {
+	log := ctrl.Log.WithName("TestCreateNamespaces")
+	log.Info("Starting TestCreateNamespaces Test Function")
+
 	testClient, stopFn, err := setupTestEnvironment()
 	defer stopFn()
 	assert.Nil(t, err)
@@ -123,6 +129,9 @@ func TestCreateNamespaces(t *testing.T) {
 }
 
 func TestCreateNamespace(t *testing.T) {
+	log := ctrl.Log.WithName("TestCreateNamespace")
+	log.Info("Starting TestCreateNamespace Test Function")
+
 	testClient, stopFn, err := setupTestEnvironment()
 	defer stopFn()
 	assert.Nil(t, err)

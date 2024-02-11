@@ -43,5 +43,7 @@ docker-test: build-docker-test
 docker-test-shell:
 	docker run -it --rm -v "$(shell pwd):$(shell pwd)" -w "$(shell pwd)" knamespacertest:dev \
 	/bin/bash
+docker-run: build-docker
+	docker run -it --rm -v "${HOME}/.kube/:/root/.kube/" knamespacer:dev 
 # e2e-test:
 # 	venom run e2e/tests/* --output-dir e2e/results --log info --strictf
