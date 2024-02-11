@@ -3,8 +3,9 @@ package controller
 import (
 	"context"
 	"fmt"
-	"knamespacer/pkg/knamespace"
-	"knamespacer/pkg/kube"
+
+	"github.com/ejether/knamespacer/pkg/knamespace"
+	"github.com/ejether/knamespacer/pkg/kube"
 
 	"github.com/davecgh/go-spew/spew"
 	log "github.com/sirupsen/logrus"

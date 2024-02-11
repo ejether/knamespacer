@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-package kube
+package kube_test
 
 import (
 	"context"
@@ -27,8 +27,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logzap "sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	"github.com/ejether/knamespacer/pkg/utils"
 )
 
 var (
@@ -64,7 +65,7 @@ func TestEnvTest(t *testing.T) {
 	log := ctrl.Log.WithName("TestEnvTest")
 	log.Info("Starting TestEnvTest Test Function")
 
-	testClient, stopFn, err := setupTestEnvironment()
+	testClient, stopFn, err := utils.SetupTestEnvironment()
 	defer stopFn()
 	assert.Nil(t, err)
 
@@ -82,7 +83,7 @@ func TestListClusterNameSpaces(t *testing.T) {
 	log := ctrl.Log.WithName("TestListClusterNameSpaces")
 	log.Info("Starting TestListClusterNameSpaces Test Function")
 
-	testClient, stopFn, err := setupTestEnvironment()
+	testClient, stopFn, err := utils.SetupTestEnvironment()
 	defer stopFn()
 	assert.Nil(t, err)
 
@@ -95,7 +96,7 @@ func TestListClusterNameSpaces(t *testing.T) {
 	assert.Nil(t, err)
 
 	for _, v := range testNamespaces {
-		if !inArray(v, nss.Items) {
+		if !utils.InArray(v, nss.Items) {
 			assert.Nil(t, errors.New("returned namespaces do not match test namespaces"))
 		}
 	}
@@ -105,7 +106,7 @@ func TestCreateNamespaces(t *testing.T) {
 	log := ctrl.Log.WithName("TestCreateNamespaces")
 	log.Info("Starting TestCreateNamespaces Test Function")
 
-	testClient, stopFn, err := setupTestEnvironment()
+	testClient, stopFn, err := utils.SetupTestEnvironment()
 	defer stopFn()
 	assert.Nil(t, err)
 
@@ -122,7 +123,7 @@ func TestCreateNamespaces(t *testing.T) {
 	assert.Nil(t, err)
 
 	for _, v := range testNamespaces {
-		if !inArray(v, nss.Items) {
+		if !utils.InArray(v, nss.Items) {
 			assert.Nil(t, errors.New("returned namespaces do not match test namespaces"))
 		}
 	}
@@ -132,7 +133,7 @@ func TestCreateNamespace(t *testing.T) {
 	log := ctrl.Log.WithName("TestCreateNamespace")
 	log.Info("Starting TestCreateNamespace Test Function")
 
-	testClient, stopFn, err := setupTestEnvironment()
+	testClient, stopFn, err := utils.SetupTestEnvironment()
 	defer stopFn()
 	assert.Nil(t, err)
 
@@ -146,33 +147,8 @@ func TestCreateNamespace(t *testing.T) {
 	assert.Nil(t, err)
 
 	for _, v := range testNamespaces {
-		if !inArray(v, nss.Items) {
+		if !utils.InArray(v, nss.Items) {
 			assert.Nil(t, errors.New("returned namespaces do not match test namespaces"))
 		}
 	}
-}
-
-func setupTestEnvironment() (*K8sClient, func(), error) {
-	env := &envtest.Environment{}
-	cfg, err := env.Start()
-	if err != nil {
-		return nil, nil, err
-	}
-	testClient := &K8sClient{
-		K8s: GetClient(cfg),
-	}
-
-	// linter is mad add the ignored error when defer stopFn()
-	return testClient, func() {
-		_ = env.Stop()
-	}, nil
-}
-
-func inArray(ns corev1.Namespace, arr []corev1.Namespace) bool {
-	for _, v := range arr {
-		if ns.Name == v.Name {
-			return true
-		}
-	}
-	return false
 }

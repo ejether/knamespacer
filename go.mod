@@ -1,4 +1,4 @@
-module knamespacer
+module github.com/ejether/knamespacer
 
 go 1.21
 

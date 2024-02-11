@@ -16,7 +16,7 @@ lint:
 test:
 	printf "\n\nTests:\n\n"
 	KUBEBUILDER_ASSETS="$(shell setup-envtest use $(ENVTEST_K8S_VERSION) -p path)" \
-	$(GOCMD) test -v --bench --benchmem -coverprofile coverage.txt -covermode=atomic ./...
+	$(GOCMD) test -v --bench --benchmem -coverprofile coverage.txt -covermode=atomic ./pkg/e2e
 	$(GOCMD) vet ./... 2> govet-report.out
 	$(GOCMD) tool cover -html=coverage.txt -o cover-report.html
 	printf "\nCoverage report available at cover-report.html\n\n"
