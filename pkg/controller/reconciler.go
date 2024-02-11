@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"knamespacer/pkg/knamespace"
+	"knamespacer/pkg/kube"
 
 	"github.com/davecgh/go-spew/spew"
 	log "github.com/sirupsen/logrus"
@@ -26,15 +27,19 @@ func (r *KnamespacerController) Reconcile(ctx context.Context, req ctrl.Request)
 	namespaceName := req.Name
 	log.Infof("Reconiling: %v", spew.Sdump(namespaceName, req))
 
+	k8s := &kube.K8sClient{
+		K8s: r.Client,
+	}
+
 	if r.StartUp {
-		err := createMissingNamespaces(r.NamespaceConfig)
+		err := createMissingNamespaces(k8s, r.NamespaceConfig)
 		if err != nil {
 			return ctrl.Result{}, fmt.Errorf("encounter %w while creating %s. Skipping", err, namespaceName)
 		}
 		r.StartUp = false
 	}
 
-	err := processNamespace(namespaceName, r.NamespaceConfig)
+	err := processNamespace(k8s, namespaceName, r.NamespaceConfig)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("encounter %w while processing %s. Skipping", err, namespaceName)
 	}

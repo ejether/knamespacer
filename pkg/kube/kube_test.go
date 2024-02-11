@@ -69,12 +69,12 @@ func TestEnvTest(t *testing.T) {
 	assert.Nil(t, err)
 
 	for _, ns := range testNamespaces {
-		err = testClient.k8s.Create(context.TODO(), &ns)
+		err = testClient.K8s.Create(context.TODO(), &ns)
 		assert.Nil(t, err)
 	}
 
 	list := corev1.NamespaceList{}
-	err = testClient.k8s.List(context.Background(), &list)
+	err = testClient.K8s.List(context.Background(), &list)
 	assert.Nil(t, err)
 }
 
@@ -87,7 +87,7 @@ func TestListClusterNameSpaces(t *testing.T) {
 	assert.Nil(t, err)
 
 	for _, v := range testNamespaces {
-		err := testClient.k8s.Create(context.TODO(), &v)
+		err := testClient.K8s.Create(context.TODO(), &v)
 		assert.Nil(t, err)
 	}
 
@@ -118,7 +118,7 @@ func TestCreateNamespaces(t *testing.T) {
 	assert.Nil(t, err)
 
 	nss := corev1.NamespaceList{}
-	err = testClient.k8s.List(context.Background(), &nss)
+	err = testClient.K8s.List(context.Background(), &nss)
 	assert.Nil(t, err)
 
 	for _, v := range testNamespaces {
@@ -142,7 +142,7 @@ func TestCreateNamespace(t *testing.T) {
 	}
 
 	nss := corev1.NamespaceList{}
-	err = testClient.k8s.List(context.Background(), &nss)
+	err = testClient.K8s.List(context.Background(), &nss)
 	assert.Nil(t, err)
 
 	for _, v := range testNamespaces {
@@ -159,7 +159,7 @@ func setupTestEnvironment() (*K8sClient, func(), error) {
 		return nil, nil, err
 	}
 	testClient := &K8sClient{
-		k8s: GetClient(cfg),
+		K8s: GetClient(cfg),
 	}
 
 	// linter is mad add the ignored error when defer stopFn()

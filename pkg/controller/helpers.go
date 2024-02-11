@@ -9,9 +9,8 @@ import (
 )
 
 // Process cluster namespace and modify metadata if specified
-func processNamespace(namespaceName string, namespacesConfig *knamespace.NamespacesConfig) error {
+func processNamespace(k8s *kube.K8sClient, namespaceName string, namespacesConfig *knamespace.NamespacesConfig) error {
 	log.Info("Processing Cluster Namespace: ", namespaceName)
-	client := kube.NewK8sClient()
 
 	namespaceConfig, err := namespacesConfig.GetConfig(namespaceName)
 	if err != nil {
@@ -19,7 +18,7 @@ func processNamespace(namespaceName string, namespacesConfig *knamespace.Namespa
 		return nil
 	}
 
-	namespace, err := client.GetClusterNamespace(namespaceName)
+	namespace, err := k8s.GetClusterNamespace(namespaceName)
 	if err != nil {
 		log.Infof("Unable to fetch cluster namespace '%s' for modification: %s", namespaceName, err)
 		return err
@@ -29,7 +28,7 @@ func processNamespace(namespaceName string, namespacesConfig *knamespace.Namespa
 
 	log.Debugf("Updated Namespace Meta: %#v", namespace.ObjectMeta)
 
-	err = client.UpdateNamespace(namespace)
+	err = k8s.UpdateNamespace(namespace)
 	if err != nil {
 		log.Errorf("Failed to update namespace %s: %s", namespace, err)
 		return nil
@@ -97,10 +96,8 @@ func insertNamespaceMeta(metaObject map[string]string, config map[string]string)
 }
 
 // Determine which Knamespaces don't exist in the cluster and create them
-func createMissingNamespaces(namespacesConfig *knamespace.NamespacesConfig) error {
-	client := kube.NewK8sClient()
-
-	nsList, err := client.ListClusterNameSpaces()
+func createMissingNamespaces(k8s *kube.K8sClient, namespacesConfig *knamespace.NamespacesConfig) error {
+	nsList, err := k8s.ListClusterNameSpaces()
 	if err != nil {
 		return err
 	}
@@ -117,5 +114,5 @@ func createMissingNamespaces(namespacesConfig *knamespace.NamespacesConfig) erro
 		}
 	}
 	log.Infof("Creating configured name spaces that do not exist in cluster: %s", namespacesToCreate)
-	return client.CreateNamespaces(namespacesToCreate)
+	return k8s.CreateNamespaces(namespacesToCreate)
 }
