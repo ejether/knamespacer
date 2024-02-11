@@ -17,7 +17,7 @@
 
 package main
 
-import "knamespacer/cmd"
+import "github.com/ejether/knamespacer/cmd"
 
 func main() {
 	cmd.Execute()

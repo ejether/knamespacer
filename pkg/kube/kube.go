@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	log "github.com/sirupsen/logrus"
@@ -36,12 +37,12 @@ import (
 )
 
 type K8sClient struct {
-	k8s client.Client
+	K8s client.Client
 }
 
 func NewK8sClient() *K8sClient {
 	return &K8sClient{
-		k8s: GetClient(nil),
+		K8s: GetClient(nil),
 	}
 }
 
@@ -53,8 +54,11 @@ func GetClientSet() *kubernetes.Clientset {
 	if err != nil {
 		log.Debug("In-cluster config not found. Using local config.")
 		// Not in cluster? Let's try locally
-		kubehome := filepath.Join(homedir.HomeDir(), ".kube", "config")
-		cfg, err = clientcmd.BuildConfigFromFlags("", kubehome)
+		var kubeconfig string
+		if kubeconfig = os.Getenv("KUBECONFIG"); kubeconfig == "" {
+			kubeconfig = filepath.Join(homedir.HomeDir(), ".kube", "config")
+		}
+		cfg, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
 		if err != nil {
 			log.Fatalf("Error loading local kubernetes configuration: %s", err)
 		}
@@ -86,7 +90,7 @@ func GetClient(cfg *rest.Config) client.Client {
 // List namespaces currently in cluster. Exit if we can't.
 func (c *K8sClient) ListClusterNameSpaces() (*corev1.NamespaceList, error) {
 	nsList := &corev1.NamespaceList{}
-	err := c.k8s.List(context.TODO(), nsList)
+	err := c.K8s.List(context.TODO(), nsList)
 	if err != nil {
 		return nil, fmt.Errorf("Error listing Cluster Namespaces: %w", err)
 	}
@@ -128,14 +132,14 @@ func (c *K8sClient) CreateNamespace(namespaceName string) error {
 		}
 	}
 
-	err := c.k8s.Create(context.Background(), namespace)
+	err := c.K8s.Create(context.Background(), namespace)
 
 	return err
 }
 
 // Modify the Metadata of the specified Namespace
 func (c *K8sClient) UpdateNamespace(namespace *corev1.Namespace) error {
-	err := c.k8s.Update(context.TODO(), namespace)
+	err := c.K8s.Update(context.TODO(), namespace)
 	if err != nil {
 		log.Errorf("Could not update namespace %s: %s", namespace.Name, err)
 		return err
@@ -146,7 +150,7 @@ func (c *K8sClient) UpdateNamespace(namespace *corev1.Namespace) error {
 // Retrieve corev1.Namespace from cluster
 func (c *K8sClient) GetClusterNamespace(namespaceName string) (*corev1.Namespace, error) {
 	namespace := &corev1.Namespace{}
-	err := c.k8s.Get(context.TODO(), types.NamespacedName{
+	err := c.K8s.Get(context.TODO(), types.NamespacedName{
 		Name: namespaceName,
 	}, namespace)
 	return namespace, err

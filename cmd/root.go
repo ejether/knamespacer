@@ -21,7 +21,7 @@ import (
 	"os"
 	"sync"
 
-	"knamespacer/pkg/controller"
+	"github.com/ejether/knamespacer/pkg/controller"
 
 	"github.com/spf13/cobra"
 
@@ -29,7 +29,7 @@ import (
 )
 
 // rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
+var RootCmd = &cobra.Command{
 	Use:   "knamespacer",
 	Short: "Controller for your kubernetes namespaces",
 	Long:  `Controller for your kubernetes namespaces`,
@@ -53,7 +53,7 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	err := rootCmd.Execute()
+	err := RootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}
@@ -63,11 +63,11 @@ var configFile string
 var debug bool
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Yaml file with Namespaces to configure")
-	err := rootCmd.MarkPersistentFlagRequired("config")
+	RootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Yaml file with Namespaces to configure")
+	err := RootCmd.MarkPersistentFlagRequired("config")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Enable debug mode")
+	RootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Enable debug mode")
 }

@@ -28,8 +28,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 	toolsWatch "k8s.io/client-go/tools/watch"
 
-	"knamespacer/pkg/knamespace"
-	"knamespacer/pkg/kube"
+	"github.com/ejether/knamespacer/pkg/knamespace"
+	"github.com/ejether/knamespacer/pkg/kube"
 )
 
 func Controller(namespacesConfigFile string) {
