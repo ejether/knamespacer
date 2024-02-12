@@ -30,6 +30,7 @@ clean:
 	rm -rf e2e/results/*
 	rm *-report*
 	rm coverage.txt
+	rm -f knamespacer-*.tgz
 # Cross compilation
 build-linux:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -o $(BINARY_NAME) -ldflags "-X main.VERSION=$(VERSION)" -v
