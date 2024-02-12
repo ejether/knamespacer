@@ -6,6 +6,7 @@ GOTEST=$(GOCMD) test
 BINARY_NAME=knamespacer
 COMMIT := $(shell git rev-parse HEAD)
 VERSION := "dev"
+ENVTEST_K8S_VERSION = 1.25.0
 
 all: test build
 build: tidy
@@ -14,6 +15,7 @@ lint:
 	golangci-lint run
 test:
 	printf "\n\nTests:\n\n"
+	KUBEBUILDER_ASSETS="$(shell setup-envtest use $(ENVTEST_K8S_VERSION) -p path)" \
 	$(GOCMD) test -v --bench --benchmem -coverprofile coverage.txt -covermode=atomic ./...
 	$(GOCMD) vet ./... 2> govet-report.out
 	$(GOCMD) tool cover -html=coverage.txt -o cover-report.html
@@ -38,5 +40,8 @@ build-docker-test:
 docker-test: build-docker-test
 	docker run -it --rm -v "$(shell pwd):$(shell pwd)" -w "$(shell pwd)" knamespacertest:dev \
 	/bin/bash -c "make test"
+docker-test-shell:
+	docker run -it --rm -v "$(shell pwd):$(shell pwd)" -w "$(shell pwd)" knamespacertest:dev \
+	/bin/bash
 # e2e-test:
 # 	venom run e2e/tests/* --output-dir e2e/results --log info --strictf

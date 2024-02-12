@@ -61,8 +61,13 @@ func WatchNamespaces(namespacesConfig *knamespace.NamespacesConfig) {
 		namespaceName := item.GetName()
 		log.Infof("Caught event %s on namespace: %s. Processing...", event.Type, namespaceName)
 
-		createMissingNamespaces(namespacesConfig)
-		err := processNamespace(namespaceName, namespacesConfig)
+		err := createMissingNamespaces(namespacesConfig)
+		if err != nil {
+			log.Errorf("Encounter %s while creating %s. Skipping....", err, namespaceName)
+			break
+		}
+
+		err = processNamespace(namespaceName, namespacesConfig)
 		if err != nil {
 			log.Errorf("Encounter %s while processing %s. Skipping....", err, namespaceName)
 			break
@@ -73,6 +78,7 @@ func WatchNamespaces(namespacesConfig *knamespace.NamespacesConfig) {
 // Process cluster namespace and modify metadata if specified
 func processNamespace(namespaceName string, namespacesConfig *knamespace.NamespacesConfig) error {
 	log.Info("Processing Cluster Namespace: ", namespaceName)
+	client := kube.NewK8sClient()
 
 	namespaceConfig, err := namespacesConfig.GetConfig(namespaceName)
 	if err != nil {
@@ -80,7 +86,7 @@ func processNamespace(namespaceName string, namespacesConfig *knamespace.Namespa
 		return nil
 	}
 
-	namespace, err := kube.GetClusterNamespace(namespaceName)
+	namespace, err := client.GetClusterNamespace(namespaceName)
 	if err != nil {
 		log.Infof("Unable to fetch cluster namespace '%s' for modification: %s", namespaceName, err)
 		return err
@@ -90,7 +96,7 @@ func processNamespace(namespaceName string, namespacesConfig *knamespace.Namespa
 
 	log.Debugf("Updated Namespace Meta: %#v", namespace.ObjectMeta)
 
-	err = kube.UpdateNamespace(namespace)
+	err = client.UpdateNamespace(namespace)
 	if err != nil {
 		log.Errorf("Failed to update namespace %s: %s", namespace, err)
 		return nil
@@ -159,7 +165,12 @@ func insertNamespaceMeta(metaObject map[string]string, config map[string]string)
 
 // Determine which Knamespaces don't exist in the cluster and create them
 func createMissingNamespaces(namespacesConfig *knamespace.NamespacesConfig) error {
-	nsList := kube.ListClusterNameSpaces()
+	client := kube.NewK8sClient()
+
+	nsList, err := client.ListClusterNameSpaces()
+	if err != nil {
+		return err
+	}
 	var namespacesToCreate []string
 	for _, configNamespace := range namespacesConfig.Namespaces {
 		createNamespace := true
@@ -173,6 +184,6 @@ func createMissingNamespaces(namespacesConfig *knamespace.NamespacesConfig) erro
 		}
 	}
 	log.Infof("Creating configured name spaces that do not exist in cluster: %s", namespacesToCreate)
-	return kube.CreateNamespaces(namespacesToCreate)
+	return client.CreateNamespaces(namespacesToCreate)
 
 }
