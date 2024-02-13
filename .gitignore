@@ -29,3 +29,6 @@ knamespacer*.tgz
 # Testing Artifacts
 cover-report.html
 coverage.txt
+
+# IDE
+.vscode

@@ -119,7 +119,7 @@ func (c *K8sClient) CreateNamespaces(namespaceNames []string) error {
 func (c *K8sClient) CreateNamespace(namespaceName string) error {
 	// This could probably go somewhere else BUT
 	// If a namespace is being terminated, then this
-	// will get the namespace and "receate" it with the
+	// will get the namespace and "recreate" it with the
 	// current namespace object
 	namespace, _ := c.GetClusterNamespace(namespaceName)
 	log.Debug(namespace.Name)
