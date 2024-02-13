@@ -81,7 +81,7 @@ jobs:
 
   testing:
     runs-on: ubuntu-latest
-    needs: [testing-image, linting]
+    needs: [testing-image]
 
     container:
       image: ghcr.io/${{ github.repository }}:testing-${{ github.sha }}
@@ -90,10 +90,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          # linter needs the full git history to get the list of files that
-          # changed across commits
-          fetch-depth: 0
 
       - name: Run Test Suite
         run: "make test"
@@ -101,8 +97,6 @@ jobs:
 
   helm-chart:
     runs-on: ubuntu-latest
-    needs: [linting, testing, build]
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -116,8 +110,6 @@ jobs:
 
       - name: Install Helm
         uses: azure/setup-helm@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }} # only needed if version is 'latest'
         id: install
 
       - name: Check Chart
@@ -159,6 +151,11 @@ jobs:
         with:
           images: |
             ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=sha
+          flavor: |
+            latest=auto
 
       - name: Build and push
         uses: docker/build-push-action@v5
