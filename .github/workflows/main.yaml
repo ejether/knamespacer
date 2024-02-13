@@ -109,7 +109,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Helm
-        uses: azure/setup-helm@3
+        uses: azure/setup-helm@v3
         id: install
 
       - name: Check Chart
@@ -151,6 +151,11 @@ jobs:
         with:
           images: |
             ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=sha
+          flavor: |
+            latest=auto
 
       - name: Build and push
         uses: docker/build-push-action@v5
