@@ -1,7 +1,6 @@
 package e2e
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -24,21 +23,46 @@ var (
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "one",
+				Annotations: map[string]string{
+					"foo": "one",
+				},
+				Labels: map[string]string{
+					"bar": "one",
+				},
 			},
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "two",
+				Annotations: map[string]string{
+					"foo": "two",
+				},
+				Labels: map[string]string{
+					"bar": "two",
+				},
 			},
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "three",
+				Annotations: map[string]string{
+					"this": "should",
+					"foo":  "three",
+				},
+				Labels: map[string]string{
+					"add": "new",
+				},
 			},
 		},
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "four",
+				Annotations: map[string]string{
+					"default": "annotation",
+				},
+				Labels: map[string]string{
+					"default": "label",
+				},
 			},
 		},
 	}
@@ -80,14 +104,5 @@ func TestEndToEnd(t *testing.T) {
 	nss, err := k8s.ListClusterNameSpaces()
 	assert.Nil(t, err)
 
-	// for _, v := range nss.Items {
-	// 	log.Info(v.Name)
-	// }
-
-	for _, v := range expectedNamespaces {
-		if !utils.InArray(v, nss.Items) {
-			assert.Nil(t, errors.New("returned namespaces do not match test namespaces"))
-		}
-	}
-
+	utils.CheckExpectedNamespaces(t, expectedNamespaces, *nss)
 }

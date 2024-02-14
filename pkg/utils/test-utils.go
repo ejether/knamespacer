@@ -2,6 +2,7 @@ package utils
 
 import (
 	"os"
+	"testing"
 
 	"github.com/ejether/knamespacer/pkg/kube"
 	log "github.com/sirupsen/logrus"
@@ -96,4 +97,41 @@ func TestNamespaces() []corev1.Namespace {
 	}
 
 	return testNamespaces
+}
+
+func CheckExpectedNamespaces(t *testing.T, expected []corev1.Namespace, actual corev1.NamespaceList) {
+	comp := func(a map[string]string, b map[string]string) bool {
+		for ak, av := range a {
+			if b[ak] == "" || b[ak] != av {
+				return false
+			}
+		}
+		return true
+	}
+
+	for _, expectedNamespace := range expected {
+		var actualNs corev1.Namespace
+		found := false
+
+		for _, ns := range actual.Items {
+			if expectedNamespace.Name == ns.Name {
+				actualNs = ns
+				found = true
+			}
+		}
+
+		if !found {
+			t.Errorf("Expected Namespace Not Discovered In Cluster (%v)\n", expectedNamespace.Name)
+			return
+		}
+
+		if !comp(expectedNamespace.Annotations, actualNs.Annotations) {
+			t.Errorf("Expected Annotations Not Matched (%v / %v) \n", expectedNamespace.Annotations, actualNs.Annotations)
+		}
+
+		if !comp(expectedNamespace.Labels, actualNs.Labels) {
+			t.Errorf("Expected Labels Not Matched (%v / %v) \n", expectedNamespace.Labels, actualNs.Labels)
+		}
+
+	}
 }

@@ -67,7 +67,9 @@ func (n NamespacesConfig) GetDefault() (*NamespaceConfig, error) {
 	return &n.DefaultConfig, nil
 }
 
-// Return Namespaces config from Namespaces config file
+// Return NamespacesConfig from Namespaces config file
+// TODO: Validate the config is complete and correct. And that mode is one of the accepted and lower cased
+// Should we introduce mode defaults?
 func GetNamespacesConfig(namespacesConfigFileName string) (*NamespacesConfig, error) {
 
 	contents, err := readConfigFile(namespacesConfigFileName)
@@ -91,7 +93,7 @@ func readConfigFile(namespacesConfigFileName string) ([]byte, error) {
 	log.Debugf("Reading Config File %s:", namespacesConfigFileName)
 	contents, err := os.ReadFile(namespacesConfigFileName)
 	if err != nil {
-		log.Errorf("Error reading Knamespacer conig file %s : %s", namespacesConfigFileName, err)
+		log.Errorf("Error reading Knamespacer config file %s : %s", namespacesConfigFileName, err)
 		return nil, err
 	}
 	log.Debugf(string(contents))
@@ -106,5 +108,6 @@ func parseConfigFileContents(contents []byte) (*NamespacesConfig, error) {
 		log.Errorf("Error parsing Knamespacer Configuration: %s", err)
 		return nil, err
 	}
+	log.Debugf("NamespacesConfig:%#v", data)
 	return data, nil
 }

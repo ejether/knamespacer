@@ -21,7 +21,7 @@ namespaces: # Creates all  namespaces listed with the metadata specified
   - name: three
     annotations:
       foo: three
-      thisL: should
+      this: should
     labels:
       add: new
     mode: upsert # Inserts new, updates existing. Does not delete
