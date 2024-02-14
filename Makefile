@@ -14,9 +14,14 @@ build: tidy
 lint:
 	golangci-lint run
 test:
-	printf "\n\nTests:\n\n"
 	KUBEBUILDER_ASSETS="$(shell setup-envtest use $(ENVTEST_K8S_VERSION) -p path)" \
 	$(GOCMD) test -v --bench --benchmem -coverprofile coverage.txt -covermode=atomic ./...
+	$(GOCMD) vet ./... 2> govet-report.out
+	$(GOCMD) tool cover -html=coverage.txt -o cover-report.html
+	printf "\nCoverage report available at cover-report.html\n\n"
+e2e-test:
+	KUBEBUILDER_ASSETS="$(shell setup-envtest use $(ENVTEST_K8S_VERSION) -p path)" \
+	$(GOCMD) test -v --bench --benchmem -coverprofile coverage.txt -covermode=atomic ./pkg/e2e
 	$(GOCMD) vet ./... 2> govet-report.out
 	$(GOCMD) tool cover -html=coverage.txt -o cover-report.html
 	printf "\nCoverage report available at cover-report.html\n\n"
@@ -41,8 +46,13 @@ build-docker-test:
 docker-test: build-docker-test
 	docker run -it --rm -v "$(shell pwd):$(shell pwd)" -w "$(shell pwd)" knamespacertest:dev \
 	/bin/bash -c "make test"
+docker-e2e-test: build-docker-test
+	docker run -it --rm -v "$(shell pwd):$(shell pwd)" -w "$(shell pwd)" knamespacertest:dev \
+	/bin/bash -c "make e2e-test"
 docker-test-shell:
 	docker run -it --rm -v "$(shell pwd):$(shell pwd)" -w "$(shell pwd)" knamespacertest:dev \
 	/bin/bash
+docker-run: build-docker
+	docker run -it --rm -v "${HOME}/.kube/:/root/.kube/" knamespacer:dev 
 # e2e-test:
 # 	venom run e2e/tests/* --output-dir e2e/results --log info --strictf

@@ -18,67 +18,15 @@
 package controller
 
 import (
-	"context"
-	"sync"
-
+	"github.com/ejether/knamespacer/pkg/knamespace"
+	"github.com/ejether/knamespacer/pkg/kube"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/tools/cache"
-	toolsWatch "k8s.io/client-go/tools/watch"
-
-	"knamespacer/pkg/knamespace"
-	"knamespacer/pkg/kube"
 )
 
-func Controller(namespacesConfigFile string) {
-
-	namespacesConfig, _ := knamespace.GetNamespacesConfig(namespacesConfigFile)
-
-	if err := createMissingNamespaces(namespacesConfig); err != nil {
-		log.Errorf("Unable to create some namespaces configure, but not already present: %s", err)
-	}
-	var wg sync.WaitGroup
-	go WatchNamespaces(namespacesConfig)
-	wg.Add(1)
-	wg.Wait()
-}
-
-// Watch for changes to cluster namespaces
-func WatchNamespaces(namespacesConfig *knamespace.NamespacesConfig) {
-	clientset := kube.GetClientSet()
-
-	watchFunc := func(options metav1.ListOptions) (watch.Interface, error) {
-		timeOut := int64(60)
-		return clientset.CoreV1().Namespaces().Watch(context.Background(), metav1.ListOptions{TimeoutSeconds: &timeOut})
-	}
-
-	watcher, _ := toolsWatch.NewRetryWatcher("1", &cache.ListWatch{WatchFunc: watchFunc})
-
-	for event := range watcher.ResultChan() {
-		item := event.Object.(*corev1.Namespace)
-		namespaceName := item.GetName()
-		log.Infof("Caught event %s on namespace: %s. Processing...", event.Type, namespaceName)
-
-		err := createMissingNamespaces(namespacesConfig)
-		if err != nil {
-			log.Errorf("Encounter %s while creating %s. Skipping....", err, namespaceName)
-			break
-		}
-
-		err = processNamespace(namespaceName, namespacesConfig)
-		if err != nil {
-			log.Errorf("Encounter %s while processing %s. Skipping....", err, namespaceName)
-			break
-		}
-	}
-}
-
 // Process cluster namespace and modify metadata if specified
-func processNamespace(namespaceName string, namespacesConfig *knamespace.NamespacesConfig) error {
+func processNamespace(k8s *kube.K8sClient, namespaceName string, namespacesConfig *knamespace.NamespacesConfig) error {
 	log.Info("Processing Cluster Namespace: ", namespaceName)
-	client := kube.NewK8sClient()
 
 	namespaceConfig, err := namespacesConfig.GetConfig(namespaceName)
 	if err != nil {
@@ -86,7 +34,7 @@ func processNamespace(namespaceName string, namespacesConfig *knamespace.Namespa
 		return nil
 	}
 
-	namespace, err := client.GetClusterNamespace(namespaceName)
+	namespace, err := k8s.GetClusterNamespace(namespaceName)
 	if err != nil {
 		log.Infof("Unable to fetch cluster namespace '%s' for modification: %s", namespaceName, err)
 		return err
@@ -96,7 +44,7 @@ func processNamespace(namespaceName string, namespacesConfig *knamespace.Namespa
 
 	log.Debugf("Updated Namespace Meta: %#v", namespace.ObjectMeta)
 
-	err = client.UpdateNamespace(namespace)
+	err = k8s.UpdateNamespace(namespace)
 	if err != nil {
 		log.Errorf("Failed to update namespace %s: %s", namespace, err)
 		return nil
@@ -164,10 +112,8 @@ func insertNamespaceMeta(metaObject map[string]string, config map[string]string)
 }
 
 // Determine which Knamespaces don't exist in the cluster and create them
-func createMissingNamespaces(namespacesConfig *knamespace.NamespacesConfig) error {
-	client := kube.NewK8sClient()
-
-	nsList, err := client.ListClusterNameSpaces()
+func createMissingNamespaces(k8s *kube.K8sClient, namespacesConfig *knamespace.NamespacesConfig) error {
+	nsList, err := k8s.ListClusterNameSpaces()
 	if err != nil {
 		return err
 	}
@@ -184,6 +130,5 @@ func createMissingNamespaces(namespacesConfig *knamespace.NamespacesConfig) erro
 		}
 	}
 	log.Infof("Creating configured name spaces that do not exist in cluster: %s", namespacesToCreate)
-	return client.CreateNamespaces(namespacesToCreate)
-
+	return k8s.CreateNamespaces(namespacesToCreate)
 }
