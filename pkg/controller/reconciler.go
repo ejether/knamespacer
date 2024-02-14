@@ -24,7 +24,6 @@ import (
 	"github.com/ejether/knamespacer/pkg/knamespace"
 	"github.com/ejether/knamespacer/pkg/kube"
 
-	"github.com/davecgh/go-spew/spew"
 	log "github.com/sirupsen/logrus"
 	ctrl "sigs.k8s.io/controller-runtime"
 
@@ -43,7 +42,7 @@ type KnamespacerController struct {
 func (r *KnamespacerController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 
 	namespaceName := req.Name
-	log.Infof("Reconiling: %v", spew.Sdump(namespaceName, req))
+	log.Infof("Reconiling: %v", namespaceName)
 
 	k8s := &kube.K8sClient{
 		K8s: r.Client,
