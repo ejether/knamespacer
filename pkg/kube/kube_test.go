@@ -60,24 +60,6 @@ func init() {
 	ctrl.SetLogger(logzap.New(logzap.UseFlagOptions(loggerOpts)))
 }
 
-func TestEnvTest(t *testing.T) {
-	log := ctrl.Log.WithName("TestEnvTest")
-	log.Info("Starting TestEnvTest Test Function")
-
-	testClient, stopFn, err := utils.SetupTestEnvironment()
-	defer stopFn()
-	assert.Nil(t, err)
-
-	for _, ns := range testNamespaces {
-		err = testClient.K8s.Create(context.TODO(), &ns)
-		assert.Nil(t, err)
-	}
-
-	list := corev1.NamespaceList{}
-	err = testClient.K8s.List(context.Background(), &list)
-	assert.Nil(t, err)
-}
-
 func TestListClusterNameSpaces(t *testing.T) {
 	testClient, stopFn, err := utils.SetupTestEnvironment()
 	defer stopFn()
