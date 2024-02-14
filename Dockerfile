@@ -24,4 +24,4 @@ WORKDIR /
 # 'nobody' user in alpine
 USER 65534:65534
 COPY --from=builder /knamespacer/knamespacer .
-# ENTRYPOINT ["/knamespacer/knamespacer"]
+ENTRYPOINT ["/knamespacer"]
