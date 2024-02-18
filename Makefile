@@ -45,14 +45,12 @@ build-docker-test:
 	docker build -t knamespacertest:dev -f testing.Dockerfile .
 docker-test: build-docker-test
 	docker run -it --rm -v "$(shell pwd):$(shell pwd)" -w "$(shell pwd)" knamespacertest:dev \
-	/bin/bash -c "make test"
+	/usr/bin/dumb-init make test
 docker-e2e-test: build-docker-test
 	docker run -it --rm -v "$(shell pwd):$(shell pwd)" -w "$(shell pwd)" knamespacertest:dev \
-	/bin/bash -c "make e2e-test"
-docker-test-shell:
+	/usr/bin/dumb-init make e2e-test
+docker-test-shell: build-docker-test
 	docker run -it --rm -v "$(shell pwd):$(shell pwd)" -w "$(shell pwd)" knamespacertest:dev \
 	/bin/bash
 docker-run: build-docker
 	docker run -it --rm -v "${HOME}/.kube/:/root/.kube/" knamespacer:dev 
-# e2e-test:
-# 	venom run e2e/tests/* --output-dir e2e/results --log info --strictf
