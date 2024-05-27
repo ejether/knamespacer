@@ -17,7 +17,7 @@ WORKDIR /knamespacer
 RUN make build
 
 
-FROM alpine:3.19
+FROM alpine:3.20
 
 LABEL org.opencontainers.image.licenses="Apache License 2.0"
 WORKDIR /
