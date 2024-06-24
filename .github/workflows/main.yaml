@@ -68,7 +68,7 @@ jobs:
             ghcr.io/${{ github.repository }}
 
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: testing.Dockerfile
@@ -158,7 +158,7 @@ jobs:
             latest=auto
 
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64,linux/arm64
